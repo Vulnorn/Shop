@@ -244,7 +244,5 @@
         {
             Console.WriteLine($"Зелье {Name} - {Quantity} штук, стоит {Price} золотых за штуку.");
         }
-
-
     }
 }
