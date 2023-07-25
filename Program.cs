@@ -4,66 +4,27 @@
     {
         static void Main(string[] args)
         {
-            Player player = new Player(1000);
-            Vendor vendor = new Vendor();
+            Player player = new Player(10);
+            Vendor vendor= new Vendor();
+            Shop Shop = new Shop();
 
-            vendor.Trade(player);
-            
+            Shop.Work();
         }
     }
 
-    class Player
+    class Shop
     {
-        private List<Potion> _inventory = new List<Potion>();
 
-        public Player(int money)
-        {
-            Money = money;
-        }
-
-        public int Money { get; private set; }
-
-        public void Info()
-        {
-            Console.WriteLine($"Количество денег - {Money} золотых.\n");
-        }
-
-        public void GetItem(Potion potion)
-        {
-            _inventory.Add(potion);
-            Pay(potion);
-        }
-
-        public void ShowInvetory()
-        {
-            for (int i = 0; i < _inventory.Count; i++)
-                _inventory[i].ShowInfo();     
-            
-            Console.ReadKey();
-        }
-
-        private void Pay(Potion potion)
-        {
-            Money -= potion.Quantity * potion.Price;
-        }
-    }
-
-    class Vendor
-    {
-        private List<Potion> _items = new List<Potion>();
-
-        public Vendor()
+        public Shop()
         {
             CreateShop();
             CalculateQuantityItems();
             IsWork = true;
         }
 
-        public int Money { get; private set; }
-        public int QuantityItems { get; private set; }
         public bool IsWork { get; private set; }
 
-        public void Trade(Player player)
+        public void Work(Character player)
         {
 
             while (WokShop())
@@ -80,7 +41,7 @@
                 if (GetInputUser(out inputUser) == false)
                     continue;
 
-                inputUser -= 1;
+                inputUser--;
 
                 SellPotion(player, inputUser);
                 player.ShowInvetory();
@@ -89,37 +50,14 @@
             }
         }
 
-        private bool SellPotion(Player player, int inputUser)
+        private bool SellPotion(Character player, int inputUser)
         {
-            if (CheckQuantityItems(inputUser) == false)
-                return false;
 
-            Console.WriteLine("Сколько штук хотите купить?");
-
-            if (GetInputUser(out int quantityItemsBuy) == false)
-                return false;
-
-            if (CheckSolvencyPlayer(player, quantityItemsBuy, inputUser) == false)
-                return false;
-
-            player.GetItem(new Potion(_items[inputUser].Name, quantityItemsBuy, _items[inputUser].Price));
-
-
-
-            return true;
         }
 
-        private bool CheckSolvencyPlayer(Player player, int quantityItemsBuy, int inputUser)
+        private bool CheckSolvencyPlayer(Character player, int quantityItemsBuy, int inputUser)
         {
-            int solvencyPlayer = player.Money - (quantityItemsBuy * _items[inputUser].Price);
 
-            if (solvencyPlayer < 0)
-            {
-                Console.WriteLine("У Вас не достаточно денег для покупки.");
-                return false;
-            }
-
-            return true;
         }
 
         private bool CheckQuantityItems(int inputUser)
@@ -144,12 +82,7 @@
 
         private void ShowItems()
         {
-            for (int i = 0; i < _items.Count; i++)
-            {
-                int index = i + 1;
-                Console.Write($"{index}) ");
-                _items[i].ShowInfo();
-            }
+
         }
 
         private void CreateShop()
@@ -159,6 +92,8 @@
             _items.Add(new Potion("Восполнения", 14, 5));
             _items.Add(new Potion("Среднего Исцеления", 24, 12));
             _items.Add(new Potion("Скорости", 4, 50));
+
+            _boxes.Add(new Stack(new Potion("Исцеления", 10, 4), 4));
         }
 
         private bool WokShop()
@@ -223,26 +158,121 @@
 
             return false;
         }
-
-
     }
 
     class Potion
     {
-        public Potion(string name, int quantity, int price)
+        public Potion(string name, int price)
         {
             Name = name;
-            Quantity = quantity;
             Price = price;
         }
 
         public string Name { get; private set; }
-        public int Quantity { get; private set; }
         public int Price { get; private set; }
 
         public void ShowInfo()
         {
-            Console.WriteLine($"Зелье {Name} - {Quantity} штук, стоит {Price} золотых за штуку.");
+            Console.Write($"Зелье {Name}, цена {Price} золотых за штуку.");
         }
+    }
+
+    class Stack
+    {
+        public Stack(Potion potion, int quantity)
+        {
+            Potion = potion;
+            Quantity = quantity;
+        }
+
+        public Potion Potion { get; private set; }
+        public int Quantity { get; private set; }
+
+        public void ShowInfo()
+        {
+            Potion.ShowInfo();
+            Console.Write($" Количество - {Quantity}.\n");
+        }
+    }
+
+    class Repository
+    {
+        public List<Stack> Stack = new List<Stack>();
+
+        public void GetItem(Stack stack)
+        {
+           Stack.Add(stack);
+        }
+
+
+    }
+
+    class Inventor : Repository
+    {
+        public Inventor()
+        {
+            Stack = new List<Stack>();
+        }
+    }
+
+    class Warehouse : Repository
+    {
+        public Warehouse()
+        {
+            Stack = new List<Stack>();
+            Fill();
+        }
+
+        private void Fill()
+        {
+            Stack.Add(new Stack( new Potion("Исцеления", 4),10));
+            Stack.Add(new Stack(new Potion("Востановления", 5), 15));
+            Stack.Add(new Stack(new Potion("Среднее исцеления", 10), 6));
+            Stack.Add(new Stack(new Potion("Скорость", 50), 3));
+        }
+    }
+
+    class Character
+    {
+        protected Repository Repository = new Repository();
+
+        public Character(int money)
+        {
+            Money = money;
+        }
+
+        public int Money { get; private set; }
+
+        public void Info()
+        {
+            Console.WriteLine($"Количество денег - {Money} золотых.\n");
+        }
+
+        public void GetItem(Stack stack)
+        {
+            Repository.Stack.Add(stack);
+        }
+
+        public void ShowAllItems()
+        {
+            for (int i = 0; i < Repository.Stack.Count; i++)
+                Repository.Stack[i].ShowInfo();
+
+            Console.ReadKey();
+        }
+
+        private void Pay()
+        {
+        }
+    }
+
+    class Player : Character
+    {
+        public Player(int money) : base(money) { }
+    }
+
+    class Vendor : Character
+    {
+        public Vendor() : base(100) { }
     }
 }
