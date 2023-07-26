@@ -1,11 +1,12 @@
-﻿namespace Shop
+﻿using System;
+using System.Xml;
+
+namespace Shop
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Player player = new Player(10);
-            Vendor vendor= new Vendor();
             Shop Shop = new Shop();
 
             Shop.Work();
@@ -14,101 +15,36 @@
 
     class Shop
     {
+        private Vendor _vendor = new Vendor();
+        private Player _player = new Player(10);
 
         public Shop()
         {
             CreateShop();
-            CalculateQuantityItems();
-            IsWork = true;
         }
 
         public bool IsWork { get; private set; }
+        public int QuantityItems { get; private set; }
 
-        public void Work(Character player)
+        public void Work()
         {
-
-            while (WokShop())
+            while (IsWork)
             {
-                Console.Clear();
-                Console.WriteLine("Добро пожаловать в магазин, что жедаете купить?");
-                int inputUser;
-
-                player.Info();
-                ShowItems();
-
-                Console.WriteLine("Выберите зелье которое хотите купить.");
-
-                if (GetInputUser(out inputUser) == false)
-                    continue;
-
-                inputUser--;
-
-                SellPotion(player, inputUser);
-                player.ShowInvetory();
-
+                ShowMenuShop();
                 CloseShop();
             }
         }
 
-        private bool SellPotion(Character player, int inputUser)
-        {
-
-        }
-
-        private bool CheckSolvencyPlayer(Character player, int quantityItemsBuy, int inputUser)
-        {
-
-        }
-
-        private bool CheckQuantityItems(int inputUser)
-        {
-            if (GetNumberRange(_items[inputUser].Quantity))
-            {
-                Console.WriteLine("Товар закончился, его не возможно купить.");
-                Console.ReadKey();
-                return false;
-            }
-
-            if (inputUser > _items.Count)
-            {
-                Console.WriteLine("Нет такого количества товара");
-                Console.ReadKey();
-                return false;
-            }
-
-            return true;
-        }
-
-
-        private void ShowItems()
-        {
-
-        }
-
         private void CreateShop()
         {
-
-            _items.Add(new Potion("Исцеления", 10, 4));
-            _items.Add(new Potion("Восполнения", 14, 5));
-            _items.Add(new Potion("Среднего Исцеления", 24, 12));
-            _items.Add(new Potion("Скорости", 4, 50));
-
-            _boxes.Add(new Stack(new Potion("Исцеления", 10, 4), 4));
-        }
-
-        private bool WokShop()
-        {
-            return IsWork;
-        }
-
-        private void CalculateQuantityItems()
-        {
-            for (int i = 0; i < _items.Count; i++)
-                QuantityItems += _items[i].Quantity;
+            IsWork = true;
+            QuantityItems = _vendor.CalculateQuantityItems();
         }
 
         private void CloseShop()
         {
+            QuantityItems = _vendor.CalculateQuantityItems();
+
             if (QuantityItems == 0)
             {
                 IsWork = false;
@@ -117,46 +53,94 @@
             }
         }
 
-        private bool GetInputUser(out int numder)
+
+        private void ShowMenuShop()
         {
-            string userInput;
+            const string ShowAllItemsInShopMenu = "1";
+            const string SellItemsMenu = "2";
+            const string ShowInventorMenu = "3";
 
-            do
+            Console.Clear();
+            Console.WriteLine("Добро пожаловать в магазин");
+            Console.WriteLine($"Выберите пункт в меню:");
+            Console.WriteLine($"{ShowAllItemsInShopMenu} - Показать товары в магазине");
+            Console.WriteLine($"{SellItemsMenu} - Купить товар");
+            Console.WriteLine($"{ShowInventorMenu} - Показать инвентарь");
+
+            string userInput = Console.ReadLine();
+
+            switch (userInput)
             {
-                userInput = Console.ReadLine();
+                case ShowAllItemsInShopMenu:
+                    ShowItemsWarehouse();
+                    break;
+
+                case SellItemsMenu:
+                    SellItem();
+                    break;
+
+                case ShowInventorMenu:
+
+                    break;
+
+                default:
+                    Console.WriteLine("Ошибка ввода команды.");
+                    Console.ReadKey();
+                    break;
             }
-            while (GetInputValue(userInput, out numder));
+        }
 
-            if (GetNumberRange(numder))
+        private void ShowItemsWarehouse()
+        {
+            _vendor.ShowAllItems();
+        }
+
+        private void SellItem()
+        {
+            if (TryGetItem() == false)
+                Console.WriteLine("Покупка не состоялась");
+            else
+                Console.WriteLine("Вы приобрели товар");
+
+            Console.ReadKey();
+        }
+
+        private bool TryGetItem()
+        {
+
+            if (_vendor.TryGetItem(out Potion potion, out int amount) == false)
+                return false;
+
+            Console.WriteLine("Введите количество товара для покупки.");
+
+            if (GetQuantityItems(out int quantutyItems, amount) == false)
+                return false;
+
+            int bill = potion.Price * quantutyItems;
+
+            if(_player.CanPay(bill)==false)
             {
-                Console.WriteLine("Хорошая попытка.");
-                Console.ReadKey();
+                Console.WriteLine("Не достаточно денег.");
+                return false;
+            }
+
+            _player.Buy(potion, quantutyItems, bill);
+            _vendor.Sell(potion, quantutyItems, bill);
+            return true;
+        }
+
+        private bool GetQuantityItems(out int quantutyItems, int amount)
+        {
+            if (Utilite.TryGetPositiveNumber(out quantutyItems)==false)
+                return false;
+
+            if (quantutyItems > amount)
+            {
+                Console.WriteLine("Нет такого количества товара");
                 return false;
             }
 
             return true;
-        }
-
-        private bool GetInputValue(string input, out int number)
-        {
-            if (int.TryParse(input, out number) == false)
-            {
-                Console.WriteLine("Не корректный ввод.");
-                Console.ReadKey();
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool GetNumberRange(int number)
-        {
-            int positiveValue = 0;
-
-            if (number < positiveValue)
-                return true;
-
-            return false;
         }
     }
 
@@ -193,55 +177,29 @@
             Potion.ShowInfo();
             Console.Write($" Количество - {Quantity}.\n");
         }
-    }
 
-    class Repository
-    {
-        public List<Stack> Stack = new List<Stack>();
-
-        public void GetItem(Stack stack)
+        public void IncreaseQuantity(int quantity)
         {
-           Stack.Add(stack);
+            Quantity = Quantity + quantity;
         }
 
-
-    }
-
-    class Inventor : Repository
-    {
-        public Inventor()
+        public void DecreaseQuantity(int quantity)
         {
-            Stack = new List<Stack>();
-        }
-    }
-
-    class Warehouse : Repository
-    {
-        public Warehouse()
-        {
-            Stack = new List<Stack>();
-            Fill();
+            Quantity = Quantity - quantity;
         }
 
-        private void Fill()
-        {
-            Stack.Add(new Stack( new Potion("Исцеления", 4),10));
-            Stack.Add(new Stack(new Potion("Востановления", 5), 15));
-            Stack.Add(new Stack(new Potion("Среднее исцеления", 10), 6));
-            Stack.Add(new Stack(new Potion("Скорость", 50), 3));
-        }
     }
 
     class Character
     {
-        protected Repository Repository = new Repository();
+        protected List<Stack> Stacks = new List<Stack>();
 
         public Character(int money)
         {
             Money = money;
         }
 
-        public int Money { get; private set; }
+        public int Money { get; protected set; }
 
         public void Info()
         {
@@ -250,29 +208,161 @@
 
         public void GetItem(Stack stack)
         {
-            Repository.Stack.Add(stack);
+            Stacks.Add(stack);
         }
 
         public void ShowAllItems()
         {
-            for (int i = 0; i < Repository.Stack.Count; i++)
-                Repository.Stack[i].ShowInfo();
+            for (int i = 0; i < Stacks.Count; i++)
+            {
+                int numberInlist = i + 1;
+                Console.Write($"{numberInlist}) ");
+                Stacks[i].ShowInfo();
+            }
 
             Console.ReadKey();
         }
 
-        private void Pay()
+        public bool GetNumberStack(int numberItem)
         {
+            numberItem--;
+
+            if (numberItem > Stacks.Count)
+            {
+                Console.WriteLine("Нет такого товара.");
+                return false;
+            }
+
+            return true;
         }
     }
 
     class Player : Character
     {
         public Player(int money) : base(money) { }
+
+        public bool CanPay(int bill)
+        {
+            return Money >= bill;
+        }
+
+        public void Buy(Potion potion, int amount, int bill)
+        {
+            bool isExistItem=false;
+
+            for (int i = 0;i<Stacks.Count;i++)
+            {
+                if (Stacks[i].Potion.Name == potion.Name)
+                {
+                    isExistItem = true;
+                    Stacks[i].IncreaseQuantity(amount);
+                    Money -= bill;
+                    return;
+                }
+            }
+
+            if (isExistItem==false)
+                Stacks.Add(new Stack(potion, amount));
+        }
     }
 
     class Vendor : Character
     {
-        public Vendor() : base(100) { }
+        public Vendor() : base(100)
+        {
+            Fill();
+        }
+
+        public int CalculateQuantityItems()
+        {
+            int quantity = 0;
+
+            for (int i = 0; i < Stacks.Count; i++)
+                quantity += Stacks[i].Quantity;
+
+            return quantity;
+        }
+
+        private void Fill()
+        {
+            Stacks.Add(new Stack(new Potion("Исцеления", 4), 10));
+            Stacks.Add(new Stack(new Potion("Востановления", 5), 15));
+            Stacks.Add(new Stack(new Potion("Среднее исцеления", 10), 6));
+            Stacks.Add(new Stack(new Potion("Скорость", 50), 3));
+        }
+
+        public bool TryGetItem(out Potion potion, out int amount)
+        {
+            potion = null;
+            amount = 0;
+
+            Console.WriteLine("Введите номер товара для покупки.");
+
+            if (Utilite.TryGetPositiveNumber(out int potionIndex) == false)
+                return false;
+
+            if (potionIndex > Stacks.Count)
+                return false;
+
+            potion = Stacks[potionIndex - 1].Potion;
+            amount = Stacks[potionIndex - 1].Quantity;
+            return true;
+        }
+
+        public void Sell(Potion potion, int amount, int bill)
+        {
+            for (int i = 0; i < Stacks.Count; i++)
+            {
+                if (Stacks[i].Potion.Name == potion.Name)
+                {
+                    Stacks[i].DecreaseQuantity(amount);
+                    Money += bill;
+                    return;
+                }
+            }
+        }
+    }
+
+    class Utilite
+    {
+        public static bool TryGetPositiveNumber(out int numder)
+        {
+            string userInput;
+
+            do
+            {
+                userInput = Console.ReadLine();
+            }
+            while (GetInputValue(userInput, out numder));
+
+            if (GetNumberRange(numder))
+            {
+                Console.WriteLine("Хорошая попытка.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool GetInputValue(string input, out int number)
+        {
+            if (int.TryParse(input, out number) == false)
+            {
+                Console.WriteLine("Не корректный ввод.");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool GetNumberRange(int number)
+        {
+            int positiveValue = 0;
+
+            if (number < positiveValue)
+                return true;
+
+            return false;
+        }
     }
 }
