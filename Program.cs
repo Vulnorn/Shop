@@ -1,13 +1,12 @@
-﻿using System;
-using System.Xml;
-
-namespace Shop
+﻿namespace Shop
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Shop Shop = new Shop();
+            Vendor vendor = new Vendor();
+            Player player = new Player(100);
+            Shop Shop = new Shop(vendor, player);
 
             Shop.Work();
         }
@@ -15,12 +14,14 @@ namespace Shop
 
     class Shop
     {
-        private Vendor _vendor = new Vendor();
-        private Player _player = new Player(10);
+        private Vendor _vendor;
+        private Player _player;
 
-        public Shop()
+        public Shop(Vendor vendor, Player player)
         {
             CreateShop();
+            _vendor = vendor;
+            _player = player;
         }
 
         public bool IsWork { get; private set; }
@@ -80,7 +81,7 @@ namespace Shop
                     break;
 
                 case ShowInventorMenu:
-
+                    ShowInventorPlayer();
                     break;
 
                 default:
@@ -107,6 +108,7 @@ namespace Shop
 
         private bool TryGetItem()
         {
+            _vendor.ShowAllItems();
 
             if (_vendor.TryGetItem(out Potion potion, out int amount) == false)
                 return false;
@@ -118,7 +120,7 @@ namespace Shop
 
             int bill = potion.Price * quantutyItems;
 
-            if(_player.CanPay(bill)==false)
+            if (_player.CanPay(bill) == false)
             {
                 Console.WriteLine("Не достаточно денег.");
                 return false;
@@ -131,7 +133,7 @@ namespace Shop
 
         private bool GetQuantityItems(out int quantutyItems, int amount)
         {
-            if (Utilite.TryGetPositiveNumber(out quantutyItems)==false)
+            if (Utilite.TryGetPositiveNumber(out quantutyItems) == false)
                 return false;
 
             if (quantutyItems > amount)
@@ -141,6 +143,12 @@ namespace Shop
             }
 
             return true;
+        }
+
+        private void ShowInventorPlayer()
+        {
+            _player.ShowMoney();
+            _player.ShowAllItems();
         }
     }
 
@@ -180,14 +188,13 @@ namespace Shop
 
         public void IncreaseQuantity(int quantity)
         {
-            Quantity = Quantity + quantity;
+            Quantity += quantity;
         }
 
         public void DecreaseQuantity(int quantity)
         {
-            Quantity = Quantity - quantity;
+            Quantity -= quantity;
         }
-
     }
 
     class Character
@@ -201,7 +208,7 @@ namespace Shop
 
         public int Money { get; protected set; }
 
-        public void Info()
+        public void ShowMoney()
         {
             Console.WriteLine($"Количество денег - {Money} золотых.\n");
         }
@@ -248,21 +255,23 @@ namespace Shop
 
         public void Buy(Potion potion, int amount, int bill)
         {
-            bool isExistItem=false;
+            bool isExistItem = false;
 
-            for (int i = 0;i<Stacks.Count;i++)
+            for (int i = 0; i < Stacks.Count; i++)
             {
                 if (Stacks[i].Potion.Name == potion.Name)
                 {
                     isExistItem = true;
                     Stacks[i].IncreaseQuantity(amount);
-                    Money -= bill;
+                    Console.ReadKey();
                     return;
                 }
             }
 
-            if (isExistItem==false)
+            if (isExistItem == false)
                 Stacks.Add(new Stack(potion, amount));
+
+            Money -= bill;
         }
     }
 
@@ -281,14 +290,6 @@ namespace Shop
                 quantity += Stacks[i].Quantity;
 
             return quantity;
-        }
-
-        private void Fill()
-        {
-            Stacks.Add(new Stack(new Potion("Исцеления", 4), 10));
-            Stacks.Add(new Stack(new Potion("Востановления", 5), 15));
-            Stacks.Add(new Stack(new Potion("Среднее исцеления", 10), 6));
-            Stacks.Add(new Stack(new Potion("Скорость", 50), 3));
         }
 
         public bool TryGetItem(out Potion potion, out int amount)
@@ -320,6 +321,14 @@ namespace Shop
                     return;
                 }
             }
+        }
+
+        private void Fill()
+        {
+            Stacks.Add(new Stack(new Potion("Исцеления", 4), 10));
+            Stacks.Add(new Stack(new Potion("Востановления", 5), 15));
+            Stacks.Add(new Stack(new Potion("Среднее исцеления", 10), 6));
+            Stacks.Add(new Stack(new Potion("Скорость", 50), 3));
         }
     }
 
