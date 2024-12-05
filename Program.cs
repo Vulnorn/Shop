@@ -17,44 +17,44 @@
         private Vendor _vendor;
         private Player _player;
 
+        private bool _isWork;
+        private int _quantityItems;
+
         public Shop(Vendor vendor, Player player)
         {
-            CreateShop();
+            Create();
             _vendor = vendor;
             _player = player;
         }
 
-        public bool IsWork { get; private set; }
-        public int QuantityItems { get; private set; }
-
         public void Work()
         {
-            while (IsWork)
+            while (_isWork)
             {
-                ShowMenuShop();
-                CloseShop();
+                ShowMenu();
+                Close();
             }
         }
 
-        private void CreateShop()
+        private void Create()
         {
-            IsWork = true;
-            QuantityItems = _vendor.CalculateQuantityItems();
+            _isWork = true;
+            _quantityItems = _vendor.CalculateQuantityItems();
         }
 
-        private void CloseShop()
+        private void Close()
         {
-            QuantityItems = _vendor.CalculateQuantityItems();
+            _quantityItems = _vendor.CalculateQuantityItems();
 
-            if (QuantityItems == 0)
+            if (_quantityItems == 0)
             {
-                IsWork = false;
+                _isWork = false;
                 Console.WriteLine($"магазин закрыт. Товар закончился");
                 Console.ReadKey();
             }
         }
 
-        private void ShowMenuShop()
+        private void ShowMenu()
         {
             const string CommandShowAllItemsInShop = "1";
             const string CommandSellItems = "2";
