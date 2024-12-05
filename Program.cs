@@ -54,33 +54,32 @@
             }
         }
 
-
         private void ShowMenuShop()
         {
-            const string ShowAllItemsInShopMenu = "1";
-            const string SellItemsMenu = "2";
-            const string ShowInventorMenu = "3";
+            const string CommandShowAllItemsInShop = "1";
+            const string CommandSellItems = "2";
+            const string CommandShowInventor = "3";
 
             Console.Clear();
             Console.WriteLine("Добро пожаловать в магазин");
             Console.WriteLine($"Выберите пункт в меню:");
-            Console.WriteLine($"{ShowAllItemsInShopMenu} - Показать товары в магазине");
-            Console.WriteLine($"{SellItemsMenu} - Купить товар");
-            Console.WriteLine($"{ShowInventorMenu} - Показать инвентарь");
+            Console.WriteLine($"{CommandShowAllItemsInShop} - Показать товары в магазине");
+            Console.WriteLine($"{CommandSellItems} - Купить товар");
+            Console.WriteLine($"{CommandShowInventor} - Показать инвентарь");
 
             string userInput = Console.ReadLine();
 
             switch (userInput)
             {
-                case ShowAllItemsInShopMenu:
+                case CommandShowAllItemsInShop:
                     ShowItemsWarehouse();
                     break;
 
-                case SellItemsMenu:
+                case CommandSellItems:
                     SellItem();
                     break;
 
-                case ShowInventorMenu:
+                case CommandShowInventor:
                     ShowInventorPlayer();
                     break;
 
@@ -133,8 +132,8 @@
 
         private bool GetQuantityItems(out int quantutyItems, int amount)
         {
-            if (Utilite.TryGetPositiveNumber(out quantutyItems) == false)
-                return false;
+            int lowerLimit = 0;
+            quantutyItems=Utilite.GetNumberInRange(lowerLimit);
 
             if (quantutyItems > amount)
             {
@@ -299,8 +298,8 @@
 
             Console.WriteLine("Введите номер товара для покупки.");
 
-            if (Utilite.TryGetPositiveNumber(out int potionIndex) == false)
-                return false;
+            int lowerLimit = 0;
+            int potionIndex = Utilite.GetNumberInRange(lowerLimit);
 
             if (potionIndex > Stacks.Count)
                 return false;
@@ -334,44 +333,41 @@
 
     class Utilite
     {
-        public static bool TryGetPositiveNumber(out int numder)
+        public static int GetNumberInRange(int lowerLimitRangeNumbers = Int32.MinValue, int upperLimitRangeNumbers = Int32.MaxValue)
         {
+            bool isEnterNumber = true;
+            int enterNumber = 0;
             string userInput;
 
-            do
+            while (isEnterNumber)
             {
-                userInput = Console.ReadLine();
-            }
-            while (GetInputValue(userInput, out numder));
+                Console.WriteLine($"Введите число.");
 
-            if (GetNumberRange(numder))
+                userInput = Console.ReadLine();
+
+                if (int.TryParse(userInput, out enterNumber) == false)
+                    Console.WriteLine("Не корректный ввод.");
+                else if (VerifyForAcceptableNumber(enterNumber, lowerLimitRangeNumbers, upperLimitRangeNumbers))
+                    isEnterNumber = false;
+            }
+
+            return enterNumber;
+        }
+
+        private static bool VerifyForAcceptableNumber(int number, int lowerLimitRangeNumbers, int upperLimitRangeNumbers)
+        {
+            if (number < lowerLimitRangeNumbers)
             {
-                Console.WriteLine("Хорошая попытка.");
+                Console.WriteLine($"Число вышло за нижний предел допустимого значения.");
+                return false;
+            }
+            else if (number > upperLimitRangeNumbers)
+            {
+                Console.WriteLine($"Число вышло за верхний предел допустимого значения.");
                 return false;
             }
 
             return true;
-        }
-
-        private static bool GetInputValue(string input, out int number)
-        {
-            if (int.TryParse(input, out number) == false)
-            {
-                Console.WriteLine("Не корректный ввод.");
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool GetNumberRange(int number)
-        {
-            int positiveValue = 0;
-
-            if (number < positiveValue)
-                return true;
-
-            return false;
         }
     }
 }
